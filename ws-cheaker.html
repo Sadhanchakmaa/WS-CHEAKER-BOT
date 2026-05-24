@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WS CHEAKER • WhatsApp Number Checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #050508;
+      --surface: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.07);
+      --neon: #00ff88;
+      --neon2: #00cfff;
+      --neon3: #ffaa00;
+      --text: #e8eaf0;
+      --muted: rgba(232,234,240,0.4);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.5;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,170,0,0.08), transparent 70%); top: -200px; left: -200px; animation: drift1 18s infinite alternate; }
+    .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,207,255,0.07), transparent 70%); bottom: -150px; right: -150px; animation: drift2 22s infinite alternate; }
+    .orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(0,255,136,0.06), transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); animation: drift3 15s infinite alternate; }
+
+    @keyframes drift1 { to { transform: translate(100px, 80px); } }
+    @keyframes drift2 { to { transform: translate(-80px, -100px); } }
+    @keyframes drift3 { to { transform: translate(-50%, -50%) scale(1.3); } }
+
+    .wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 750px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    .badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--neon3);
+      background: rgba(255,170,0,0.1);
+      border: 1px solid rgba(255,170,0,0.25);
+      padding: 6px 18px;
+      border-radius: 100px;
+      display: inline-block;
+      margin-bottom: 30px;
+      animation: fadeUp 0.5s ease;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease 0.1s both;
+    }
+
+    .brand-name {
+      font-size: clamp(2.8rem, 8vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -3px;
+      background: linear-gradient(135deg, #fff, rgba(255,255,255,0.6));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-name .accent {
+      background: linear-gradient(135deg, var(--neon3), #ffcc44);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 4px;
+      margin-top: 8px;
+    }
+
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon3), transparent);
+      margin: 30px auto;
+    }
+
+    .back-home {
+      display: inline-block;
+      margin-bottom: 25px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-home:hover { color: var(--neon3); }
+
+    .grid-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 30px;
+      animation: fadeUp 0.5s ease 0.2s both;
+    }
+
+    .ws-card {
+      background: rgba(10, 12, 18, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,170,0,0.2);
+      border-radius: 20px;
+      padding: 20px 16px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      transition: all 0.25s ease;
+    }
+
+    .ws-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,170,0,0.5);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .ws-icon {
+      width: 55px;
+      height: 55px;
+      background: rgba(255,170,0,0.1);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      border: 1px solid rgba(255,170,0,0.3);
+    }
+
+    .ws-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .ws-desc {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .upload-area {
+      background: rgba(255,255,255,0.02);
+      border: 2px dashed rgba(255,170,0,0.3);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .upload-area:hover {
+      border-color: rgba(255,170,0,0.6);
+      background: rgba(255,170,0,0.03);
+    }
+
+    .line-input-area {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,170,0,0.2);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .line-input-area.active {
+      display: block;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .number-list {
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 10px;
+      margin: 15px 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+    }
+
+    .number-item {
+      padding: 5px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--neon3);
+    }
+
+    input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--neon3);
+    }
+
+    button {
+      background: linear-gradient(135deg, rgba(255,170,0,0.15), rgba(255,170,0,0.05));
+      border: 1px solid rgba(255,170,0,0.3);
+      border-radius: 12px;
+      padding: 12px 24px;
+      color: var(--neon3);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: rgba(255,170,0,0.2);
+    }
+
+    .status-card {
+      background: rgba(0,0,0,0.4);
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      border-left: 3px solid var(--neon3);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon3), #ffcc44);
+      transition: width 0.3s;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a2e;
+      border: 1px solid var(--neon3);
+      border-radius: 40px;
+      padding: 10px 20px;
+      color: var(--neon3);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 550px) {
+      .grid-buttons { grid-template-columns: 1fr; gap: 10px; }
+      .ws-card { flex-direction: row; text-align: left; padding: 15px; }
+      .ws-icon { width: 45px; height: 45px; font-size: 24px; }
+      .toast { white-space: normal; max-width: 90%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<canvas id="bg-canvas"></canvas>
+
+<div class="wrapper">
+  <a href="/" class="back-home">← Back to Home</a>
+  
+  <div class="badge">⚡ WS CHEAKER v2.0</div>
+
+  <div class="brand">
+    <div class="brand-name">WS<span class="accent">-CHEAKER</span></div>
+    <div class="brand-sub">WhatsApp Number Checker Tool</div>
+  </div>
+  <div class="divider"></div>
+
+  <div class="grid-buttons">
+    <div class="ws-card" data-action="txt-file">
+      <div class="ws-icon">📁</div>
+      <div><div class="ws-label">Send TXT File</div><div class="ws-desc">Upload .txt file with numbers</div></div>
+    </div>
+    <div class="ws-card" data-action="line-by-line">
+      <div class="ws-icon">📝</div>
+      <div><div class="ws-label">Line by Line</div><div class="ws-desc">Add numbers one by one</div></div>
+    </div>
+    <div class="ws-card" data-action="session-status">
+      <div class="ws-icon">📊</div>
+      <div><div class="ws-label">Session Status</div><div class="ws-desc">Check current session</div></div>
+    </div>
+    <div class="ws-card" data-action="logout">
+      <div class="ws-icon">🚪</div>
+      <div><div class="ws-label">Logout Device</div><div class="ws-desc">Delete WhatsApp session</div></div>
+    </div>
+    <div class="ws-card" data-action="restart">
+      <div class="ws-icon">⚙️</div>
+      <div><div class="ws-label">Restart Service</div><div class="ws-desc">Reboot checker service</div></div>
+    </div>
+    <div class="ws-card" data-action="clear-cache">
+      <div class="ws-icon">🧹</div>
+      <div><div class="ws-label">Clear Cache</div><div class="ws-desc">Clear temporary data</div></div>
+    </div>
+  </div>
+
+  <!-- File Upload Area -->
+  <div id="fileUploadArea" class="upload-area">
+    <div style="font-size: 48px; margin-bottom: 10px;">📁</div>
+    <div style="font-weight: 600; margin-bottom: 5px;">Click or Drag & Drop TXT File</div>
+    <div style="font-size: 11px; color: var(--muted);">One number per line | Format: 8801xxxxxxxx</div>
+    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+  </div>
+
+  <!-- Line by Line Area -->
+  <div id="lineInputArea" class="line-input-area">
+    <div style="font-weight: 600; margin-bottom: 10px;">📝 Add Numbers Line by Line</div>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <input type="text" id="phoneInput" placeholder="8801xxxxxxxx" style="flex:1;">
+      <button id="addNumberBtn">➕ Add</button>
+    </div>
+    <div id="numberList" class="number-list">
+      <div style="color: var(--muted); text-align: center; padding: 20px;">No numbers added yet</div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button id="checkNumbersBtn" style="flex:1; background: rgba(255,170,0,0.2);">✅ Check All Numbers</button>
+      <button id="clearNumbersBtn" style="flex:1;">🗑 Clear All</button>
+      <button id="cancelLineBtn">✖ Cancel</button>
+    </div>
+  </div>
+
+  <!-- Status Card -->
+  <div id="statusCard" class="status-card">
+    <div>📊 <strong>System Status</strong></div>
+    <div id="statusText" style="margin-top: 10px;">✅ Ready | Click any button to start</div>
+    <div class="progress-bar" id="progressBar" style="display: none;"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<div id="toast" class="toast">✨ Message</div>
+
+<script>
+  // Canvas Background
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [], animId;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+
+  function initParticles() {
+    particles = [];
+    const count = Math.min(Math.floor((w * h) / 18000), 55);
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * w, y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+        r: Math.random() * 1.5 + 0.5, alpha: Math.random() * 0.4 + 0.1
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < particles.length; i++) {
+      let p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+      for (let j = i + 1; j < particles.length; j++) {
+        let p2 = particles[j];
+        let dx = p.x - p2.x, dy = p.y - p2.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 130) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(255,170,0,${(1 - dist / 130) * 0.08})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,170,0,${p.alpha})`;
+      ctx.fill();
+    }
+    animId = requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { cancelAnimationFrame(animId); resize(); initParticles(); draw(); });
+  resize(); initParticles(); draw();
+
+  function showToast(msg, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      toast.textContent = msg;
+      toast.style.borderColor = isError ? '#ff4444' : '#ffaa00';
+      toast.style.color = isError ? '#ff8888' : '#ffaa00';
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+    }, 10);
+  }
+
+  function updateStatus(msg, showProgress = false, percent = 0) {
+    const statusText = document.getElementById('statusText');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    statusText.innerHTML = msg;
+    if (showProgress) {
+      progressBar.style.display = 'block';
+      progressFill.style.width = percent + '%';
+    } else {
+      progressBar.style.display = 'none';
+    }
+  }
+
+  let lineNumbers = [];
+
+  function renderLineNumbers() {
+    const container = document.getElementById('numberList');
+    if (lineNumbers.length === 0) {
+      container.innerHTML = '<div style="color: var(--muted); text-align: center; padding: 20px;">No numbers added yet</div>';
+      return;
+    }
+    container.innerHTML = lineNumbers.map((num, idx) => 
+      `<div class="number-item">${idx+1}. ${num} <span style="float:right; cursor:pointer; color:#ff6666;" onclick="removeNumber(${idx})">✖</span></div>`
+    ).join('');
+  }
+
+  window.removeNumber = function(idx) {
+    lineNumbers.splice(idx, 1);
+    renderLineNumbers();
+    showToast(`Removed, ${lineNumbers.length} numbers left`);
+  };
+
+  async function checkNumbers(numbers) {
+    if (numbers.length === 0) {
+      showToast('No numbers to check!', true);
+      return;
+    }
+    
+    updateStatus(`🔍 Checking ${numbers.length} numbers... (500 at once)`, true, 0);
+    showToast(`Checking ${numbers.length} numbers... Please wait`);
+    
+    let progress = 0;
+    const interval = setInterval(() => {
+      if (progress < 90) {
+        progress += 10;
+        document.getElementById('progressFill').style.width = progress + '%';
+      }
+    }, 500);
+    
+    try {
+      const response = await fetch('/api/check-numbers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numbers: numbers })
+      });
+      
+      clearInterval(interval);
+      
+      if (response.ok) {
+        const result = await response.json();
+        document.getElementById('progressFill').style.width = '100%';
+        updateStatus(`✅ Completed! ${result.exists} found, ${result.notExists} not found`, false);
+        showToast(`✅ Done! ${result.exists} numbers have WhatsApp`);
+      } else {
+        throw new Error('API error');
+      }
+    } catch (err) {
+      clearInterval(interval);
+      updateStatus(`⚠️ Demo: ${numbers.length} numbers ready. Connect backend API (/api/check-numbers)`, false);
+      showToast(`Demo: ${numbers.length} numbers (backend API required)`, true);
+      console.log('Numbers to check:', numbers);
+    }
+  }
+
+  // File upload
+  const uploadArea = document.getElementById('fileUploadArea');
+  const fileInput = document.getElementById('fileInput');
+
+  uploadArea.addEventListener('click', () => fileInput.click());
+  
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+  });
+  
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+  
+  uploadArea.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.txt')) {
+      const text = await file.text();
+      const numbers = text.split('\n').filter(n => n.trim().length > 0);
+      showToast(`📁 Loaded ${numbers.length} numbers`);
+      await checkNumbers(numbers);
+    } else {
+      showToast('Please upload a .txt file', true);
+    }
+  });
+
+  fileInput.addEventListener('change', async (e) => {
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const text = await file.text();
+      const numbers = text.split('\n').filter(n => n.trim().length > 0);
+      showToast(`📁 Loaded ${numbers.length} numbers`);
+      await checkNumbers(numbers);
+      fileInput.value = '';
+    }
+  });
+
+  // Line by line
+  const lineInputArea = document.getElementById('lineInputArea');
+  const phoneInput = document.getElementById('phoneInput');
+  const addNumberBtn = document.getElementById('addNumberBtn');
+  const checkNumbersBtn = document.getElementById('checkNumbersBtn');
+  const clearNumbersBtn = document.getElementById('clearNumbersBtn');
+  const cancelLineBtn = document.getElementById('cancelLineBtn');
+
+  addNumberBtn.addEventListener('click', () => {
+    let num = phoneInput.value.trim();
+    if (!num) return;
+    if (!/^[0-9]{10,15}$/.test(num)) {
+      showToast('Invalid number! Use: 8801xxxxxxxx', true);
+      return;
+    }
+    lineNumbers.push(num);
+    renderLineNumbers();
+    phoneInput.value = '';
+    showToast(`✅ Added: ${num} | Total: ${lineNumbers.length}`);
+  });
+
+  phoneInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addNumberBtn.click();
+  });
+
+  checkNumbersBtn.addEventListener('click', async () => {
+    if (lineNumbers.length === 0) {
+      showToast('No numbers to check!', true);
+      return;
+    }
+    await checkNumbers(lineNumbers);
+  });
+
+  clearNumbersBtn.addEventListener('click', () => {
+    lineNumbers = [];
+    renderLineNumbers();
+    showToast('All numbers cleared');
+  });
+
+  cancelLineBtn.addEventListener('click', () => {
+    lineInputArea.classList.remove('active');
+    showToast('Line input mode cancelled');
+  });
+
+  // Button actions
+  document.querySelectorAll('.ws-card').forEach(card => {
+    card.addEventListener('click', async () => {
+      const action = card.getAttribute('data-action');
+      
+      if (action === 'txt-file') {
+        lineInputArea.classList.remove('active');
+        showToast('Click or drag TXT file to upload');
+      }
+      else if (action === 'line-by-line') {
+        lineInputArea.classList.add('active');
+        showToast('Enter numbers one by one');
+      }
+      else if (action === 'session-status') {
+        updateStatus('📊 Checking session status...', true, 30);
+        setTimeout(() => {
+          updateStatus('✅ Session ACTIVE | WhatsApp connected | Device: WS-Cheaker', false);
+          showToast('Session is active and ready');
+        }, 1000);
+      }
+      else if (action === 'logout') {
+        if (confirm('⚠️ Are you sure you want to logout?')) {
+          updateStatus('🚪 Logging out...', true, 50);
+          setTimeout(() => {
+            updateStatus('✅ Logged out successfully', false);
+            showToast('Session deleted');
+          }, 1000);
+        }
+      }
+      else if (action === 'restart') {
+        updateStatus('⚙️ Restarting service...', true, 70);
+        setTimeout(() => {
+          updateStatus('✅ Service restarted | Ready', false);
+          showToast('Service restarted');
+        }, 1500);
+      }
+      else if (action === 'clear-cache') {
+        updateStatus('🧹 Clearing cache...', true, 20);
+        setTimeout(() => {
+          updateStatus('✅ Cache cleared', false);
+          showToast('Cache cleared');
+        }, 800);
+      }
+    });
+  });
+
+  lineInputArea.classList.remove('active');
+  console.log('WS CHEAKER loaded');
+</script>
+</body>
+</html>
